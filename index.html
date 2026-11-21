@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Qui a chanté l’original ? (Sonos)</title>
+<title>Qui a chanté l’original ?</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;700;800&display=swap">
 <style>
 :root{--bg:#17283A;--panel:#20374D;--ink:#F3F6FA;--mute:#9FB3C8;--hot:#FF6F91;--gold:#FFD166;--ok:#4FD1A5;--bad:#FF6F6F}
@@ -259,7 +259,7 @@ async function api(path,opt={}){
  const r=await fetch("https://api.spotify.com/v1"+path,{...opt,headers:{Authorization:"Bearer "+await token(),"Content-Type":"application/json"}});
  if(r.status===204||r.status===202)return null;
  const d=await r.json().catch(()=>null);
- if(!r.ok)throw new Error(r.status===404?"appareil inactif : lance une chanson sur la Sonos depuis l’appli Spotify, puis réessaie":r.status===403?"accès refusé par Spotify"+(d&&d.error&&(d.error.reason||d.error.message)?" – "+(d.error.reason||d.error.message):""):(d&&d.error&&d.error.message)||"erreur "+r.status);
+ if(!r.ok)throw new Error(r.status===404?"aucun appareil actif : ouvre Spotify, lance une chanson sur cet appareil quelques secondes, puis réessaie":r.status===403?((d&&d.error&&/restricted/i.test((d.error.reason||"")+(d.error.message||"")))?"cet appareil (probablement la Sonos) refuse les commandes des applications externes, Spotify ne le permet pas. Choisis le lecteur web dans la liste, ou utilise l’autre version du jeu (jeu-reprises.html)":"accès refusé par Spotify"+(d&&d.error&&(d.error.reason||d.error.message)?" – "+(d.error.reason||d.error.message):"")):(d&&d.error&&d.error.message)||"erreur "+r.status);
  return d;
 }
 async function findTrack(t,who){
@@ -269,8 +269,10 @@ async function findTrack(t,who){
  if(!hit)throw new Error("titre introuvable sur Spotify");
  return hit;
 }
+let startPct=+(lget("spct")||35);
+const startPos=h=>{const d=h.duration_ms;return Math.max(0,Math.floor(Math.min(d*startPct/100,d-50000)))};
 const dq=()=>devId&&devId!=="active"?"?device_id="+devId:"";
-const playTrack=h=>api("/me/player/play"+dq(),{method:"PUT",body:JSON.stringify({uris:[h.uri],position_ms:Math.floor(h.duration_ms*0.3)})});
+const playTrack=h=>api("/me/player/play"+dq(),{method:"PUT",body:JSON.stringify({uris:[h.uri],position_ms:startPos(h)})});
 const stop=()=>api("/me/player/pause"+dq(),{method:"PUT"}).catch(()=>{});
 const art=h=>{const u=h.album&&h.album.images[0];if(u){const l=document.getElementById("lab");l.style.backgroundImage=`url(${u.url})`;l.textContent=""}};
 
@@ -284,7 +286,7 @@ const STEPS=[
  {t:"Activer la page en ligne",h:()=>`<p>Dans ton dépôt : onglet <b>Settings</b>, puis <b>Pages</b> (menu de gauche).</p><p>Sous « Branch », choisis <b>main</b> et <b>/ (root)</b>, puis touche <b>Save</b>.</p><p>Attends une minute et recharge : une adresse apparaît en haut (« Your site is live at… »).</p>${BACK}`},
  {t:"Ouvrir ton adresse en ligne",h:()=>`<p>Touche l’adresse qui s’affiche dans les réglages Pages : c’est cette même page, mais en ligne.</p><p>L’assistant reprendra à l’étape suivante.</p><p class="hint">Cette étape est la seule qui se fait hors du jeu.</p>`},
  {t:"Ouvrir Spotify pour développeurs",h:()=>`${lnk("https://developer.spotify.com/dashboard/create","Ouvrir la création d’application")}<p>Connecte-toi avec ton compte Spotify Premium et accepte les conditions si on te les propose.</p>${BACK}`},
- {t:"Nom et description",h:()=>`<p>Dans « App name » :</p>${cpy("Jeu des reprises")}<p>Dans « App description » :</p>${cpy("Jeu musical diffusé sur ma Sonos")}<p>Laisse « Website » vide.</p>${BACK}`},
+ {t:"Nom et description",h:()=>`<p>Dans « App name » :</p>${cpy("Jeu des reprises")}<p>Dans « App description » :</p>${cpy("Jeu musical de reprises")}<p>Laisse « Website » vide.</p>${BACK}`},
  {t:"Adresse de retour (Redirect URI)",h:()=>`<p>Copie cette adresse, colle-la dans « Redirect URI », puis touche <b>Add</b> à côté de la case.</p>${location.protocol.startsWith("http")?cpy(REDIRECT):'<p class="bad">Ouvre d’abord la page depuis son adresse en ligne (étapes 1 à 4).</p>'}<p>Elle doit apparaître dans une liste sous la case.</p>${BACK}`},
  {t:"Web API et enregistrement",h:()=>`<p>Sous « Which API/SDKs are you planning to use? », coche <b>Web API</b>.</p><p>Coche la case des conditions, puis touche <b>Save</b>.</p>${BACK}`},
  {t:"Copier le Client ID",h:()=>`${lnk("https://developer.spotify.com/dashboard","Ouvrir mes applications Spotify")}<p>Touche « Jeu des reprises », puis <b>Settings</b>. Copie la ligne <b>Client ID</b> (32 caractères).</p><p class="bad">Ne copie pas « Client secret ».</p>${BACK}`},
@@ -316,10 +318,11 @@ function setup(){
 }
 async function home(){
  app.innerHTML=`<h1>Qui a chanté l’original ?</h1>
- <p>Tu entends une reprise sur ta Sonos. Devine qui a créé la chanson avant elle. À la fin de chaque manche, l’original joue.</p>
+ <p>Tu entends une reprise (le son sort de l’appareil choisi, par exemple ton enceinte Bluetooth). Devine qui a créé la chanson avant elle. À la fin de chaque manche, l’original joue.</p>
  <div class="disc"><div class="lab">🎵</div></div>
  <p>Style musical :</p><select id="gn">${GENRES.map(g=>`<option value="${g}">${g}</option>`).join("")}</select>
- <p>Enceinte de diffusion :</p>
+ <p>Début de l’extrait dans la chanson :</p><select id="spt">${[[0,"Au tout début"],[20,"Après l’intro (20 %)"],[35,"Vers le tiers (35 %)"],[50,"Au milieu (50 %)"],[65,"Vers la fin (65 %)"]].map(([v,t])=>`<option value="${v}"${v===startPct?" selected":""}>${t}</option>`).join("")}</select>
+ <p>Appareil de lecture Spotify :</p>
  <select id="dev"></select>
  <button class="sm" id="rf">Actualiser la liste</button>
  <p id="msg"></p>
@@ -332,7 +335,7 @@ async function home(){
  document.getElementById("go").onclick=()=>{
   devId=document.getElementById("dev").value;
   if(!devId){document.getElementById("msg").textContent="Choisis d’abord une enceinte.";return}
-  SS("dev",devId);const g=document.getElementById("gn").value;POOL=g==="Tous"?null:SONGS.filter(x=>x.g===g);start()};
+  SS("dev",devId);startPct=+document.getElementById("spt").value;lset("spct",startPct);const g=document.getElementById("gn").value;POOL=g==="Tous"?null:SONGS.filter(x=>x.g===g);start()};
  loadDevices();
 }
 async function loadDevices(){
@@ -341,9 +344,9 @@ async function loadDevices(){
  try{
   const d=await api("/me/player/devices");
   sel.innerHTML='<option value="active">Appareil actif de Spotify (garde la sortie en cours)</option>'+d.devices.map(x=>`<option value="${x.id}">${x.name} (${x.type})${x.is_active?" – actif":""}</option>`).join("");
-  const pick=d.devices.find(x=>x.id===LS("dev"))||d.devices.find(x=>x.type==="Speaker");
+  const pick=d.devices.find(x=>x.id===LS("dev"))||d.devices.find(x=>x.is_active);
   sel.value=pick?pick.id:"active";
-  msg.textContent=d.devices.some(x=>x.type==="Speaker")?"":(d.devices.length?"Ta Sonos n’est pas encore visible, seulement : "+d.devices.map(x=>x.name).join(", ")+". Dans l’appli Spotify du téléphone ou de l’ordinateur (pas le lecteur web), choisis ta Sonos, joue une chanson 10 secondes, puis touche Actualiser.":"Aucune enceinte trouvée. Ouvre l’appli Spotify, joue une chanson sur la Sonos, puis touche Actualiser.");
+  msg.textContent=d.devices.length?"":"Aucun appareil trouvé. Ouvre Spotify sur cet appareil, lance une chanson quelques secondes, puis touche Actualiser.";
  }catch(e){msg.textContent="Erreur : "+e.message}
 }
 function start(){const pool=POOL||SONGS;deck=pickDeck(pool,10);ROUNDS=deck.length;i=0;score=0;streak=0;round()}
@@ -354,7 +357,7 @@ async function round(){
  app.innerHTML=`<div class="top"><span>Manche ${i+1} / ${ROUNDS}</span><b>${score} pts</b></div>
  <div class="bar"><i id="bar"></i></div>
  <div class="disc" id="disc"><div class="lab" id="lab">🎵</div></div>
- <p class="q" id="q">Envoi vers la Sonos…</p>
+ <p class="q" id="q">Lancement de la chanson…</p>
  <div class="choices" id="ch"></div><div id="rev"></div>`;
  try{const h=await findTrack(cur.t,cur.c);await playTrack(h);art(h)}
  catch(e){document.getElementById("q").textContent="Lecture impossible ("+e.message+"). On passe à la suivante.";setTimeout(next,3500);return}
@@ -389,7 +392,7 @@ async function playOriginal(){
   if(my!==i)return;
   await playTrack(h);art(h);
   document.getElementById("disc").classList.add("spin");
-  st.textContent="▶ L’original de "+cur.o+" joue sur ta Sonos.";
+  st.textContent="▶ L’original de "+cur.o+" joue.";
  }catch(e){if(my===i)st.textContent="Original impossible à lancer : "+e.message}
 }
 function next(){clearInterval(timer);stop();i++;i<deck.length?round():end()}
