@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qui a chanté l’original ? (Sonos)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;700;800&display=swap">
+<style>
+:root{--bg:#17283A;--panel:#20374D;--ink:#F3F6FA;--mute:#9FB3C8;--hot:#FF6F91;--gold:#FFD166;--ok:#4FD1A5;--bad:#FF6F6F}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,sans-serif}
+main{max-width:520px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:2rem;line-height:1.1;margin:8px 0 6px;font-weight:800}
+p{color:var(--mute);line-height:1.5;margin:6px 0}
+button{font:inherit;cursor:pointer;border:0;border-radius:14px;color:var(--ink)}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.cta{background:var(--hot);padding:14px 22px;font-weight:700;font-size:1.05rem;margin-top:16px;width:100%}
+.top{display:flex;justify-content:space-between;align-items:center;font-weight:700;color:var(--mute)}
+.top b{color:var(--gold)}
+.bar{height:6px;background:var(--panel);border-radius:3px;margin:10px 0 18px;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:var(--gold);transform-origin:left}
+.disc{width:min(62vw,250px);aspect-ratio:1;margin:8px auto 18px;border-radius:50%;position:relative;
+ background:repeating-radial-gradient(circle,#0c1218 0 3px,#162029 3px 5px);box-shadow:0 10px 30px #0006}
+.disc.spin{animation:spin 2.4s linear infinite}
+.disc .lab{position:absolute;inset:31%;border-radius:50%;background:var(--hot) center/cover no-repeat;display:grid;place-items:center;font-size:2rem}
+.disc .lab::after{content:"";position:absolute;width:10px;height:10px;border-radius:50%;background:var(--bg)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.choices{display:grid;gap:10px}
+.choices button{background:var(--panel);padding:15px;text-align:left;font-weight:700;font-size:1.02rem;border:2px solid transparent}
+.choices button:hover:not(:disabled){border-color:var(--mute)}
+.choices .ok{background:#1d5a49;border-color:var(--ok)}
+.choices .no{background:#5a2a33;border-color:var(--bad)}
+.q{text-align:center;font-weight:700;margin:0 0 14px}
+.reveal{background:var(--panel);border-radius:14px;padding:14px;margin-top:14px;line-height:1.45}
+.reveal strong{color:var(--gold)}
+.big{font-size:3.4rem;font-weight:800;color:var(--gold);text-align:center;margin:10px 0}
+.hide{display:none}
+@media (prefers-reduced-motion:reduce){.disc.spin{animation:none}}
+select,input{width:100%;font:inherit;padding:13px;border-radius:12px;border:2px solid var(--panel);background:var(--bg);color:var(--ink);margin:8px 0}
+.sm{background:var(--panel);padding:10px 14px;font-weight:700;margin-top:6px}
+code{background:var(--panel);padding:2px 6px;border-radius:6px;word-break:break-all}
+ol{color:var(--mute);line-height:1.6;padding-left:20px}
+.step{background:var(--panel);border-radius:14px;padding:14px;margin:12px 0}
+.step h2{font-size:1.05rem;margin:0 0 6px}
+a.lk{display:block;background:var(--hot);color:var(--ink);text-decoration:none;font-weight:700;text-align:center;border-radius:12px;padding:12px;margin:10px 0}
+a.lk.alt{background:var(--bg);border:2px solid var(--mute)}
+.sv{width:100%;height:auto;margin-top:8px;border-radius:10px;background:var(--bg)}
+.sv text{fill:var(--mute);font:12px "Bricolage Grotesque",system-ui,sans-serif}
+.sv .hl{fill:none;stroke:var(--gold);stroke-width:3;rx:6}
+.sv .box{fill:var(--panel);stroke:var(--mute);stroke-width:1;rx:6}
+.sv .note{fill:var(--gold);font-weight:700}
+.sv .no{fill:var(--bad);font-weight:700}
+.ok-t{color:var(--ok);font-weight:700}
+.cp{display:flex;gap:8px;align-items:center;margin:6px 0}
+.cp code{flex:1}
+.cp .sm{margin:0;white-space:nowrap}
+.step ol{margin:6px 0}
+.step li{margin:8px 0}
+.step li b{color:var(--ink)}
+.nav{display:flex;gap:10px;align-items:center;margin-top:20px}
+.nav .cta{margin:0;flex:1}
+.nav .sm{margin:0}
+.hint{font-size:.9rem}
+.bad{color:var(--bad);font-weight:700}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+const SONGS=[
+ {t:"Hurt",c:"Johnny Cash",o:"Nine Inch Nails"},
+ {t:"Hallelujah",c:"Jeff Buckley",o:"Leonard Cohen"},
+ {t:"Respect",c:"Aretha Franklin",o:"Otis Redding"},
+ {t:"I Will Always Love You",c:"Whitney Houston",o:"Dolly Parton"},
+ {t:"All Along the Watchtower",c:"Jimi Hendrix",o:"Bob Dylan"},
+ {t:"Mad World",c:"Gary Jules",o:"Tears for Fears"},
+ {t:"Girls Just Want to Have Fun",c:"Cyndi Lauper",o:"Robert Hazard"},
+ {t:"Nothing Compares 2 U",c:"Sinéad O’Connor",o:"Prince"},
+ {t:"Twist and Shout",c:"The Beatles",o:"The Isley Brothers"},
+ {t:"Valerie",c:"Amy Winehouse",o:"The Zutons"},
+ {t:"Tainted Love",c:"Soft Cell",o:"Gloria Jones"},
+ {t:"Killing Me Softly",c:"Fugees",o:"Lori Lieberman"},
+ {t:"Walk This Way",c:"Run-D.M.C.",o:"Aerosmith"}
+];
+const ROUNDS=10,TIME=20,app=document.getElementById("app");
+const LS=k=>localStorage.getItem(k),SS=(k,v)=>localStorage.setItem(k,v);
+const REDIRECT=location.origin+location.pathname;
+let deck,i,score,streak,best,timer,left,cur,locked,devId;
+const shuffle=a=>{a=[...a];for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
+const n=x=>x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+
+/* ---------- Spotify ---------- */
+const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+async function login(){
+ const id=document.getElementById("cid").value.replace(/\s/g,"");
+ const er=document.getElementById("cer");
+ if(!location.protocol.startsWith("http")){er.textContent="La page doit être ouverte depuis son adresse web (https://…), pas depuis un fichier téléchargé.";return}
+ if(!/^[a-f0-9]{32}$/i.test(id)){er.textContent="Le Client ID contient exactement 32 caractères (lettres a-f et chiffres). Vérifie que tu n’as pas copié le Client Secret ou le nom de l’application.";return}
+ SS("cid",id);
+ const v=b64(crypto.getRandomValues(new Uint8Array(48)));SS("ver",v);
+ const ch=b64(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v)));
+ location.href="https://accounts.spotify.com/authorize?"+new URLSearchParams({client_id:id,response_type:"code",redirect_uri:REDIRECT,scope:"user-modify-playback-state user-read-playback-state",code_challenge_method:"S256",code_challenge:ch});
+}
+async function tokenReq(p){
+ const r=await fetch("https://accounts.spotify.com/api/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({client_id:LS("cid"),...p})});
+ const d=await r.json();
+ if(!d.access_token)throw new Error("connexion Spotify refusée");
+ SS("tok",d.access_token);SS("exp",Date.now()+d.expires_in*1000-60000);
+ if(d.refresh_token)SS("ref",d.refresh_token);
+}
+async function token(){
+ if(Date.now()>+LS("exp"))await tokenReq({grant_type:"refresh_token",refresh_token:LS("ref")});
+ return LS("tok");
+}
+async function api(path,opt={}){
+ const r=await fetch("https://api.spotify.com/v1"+path,{...opt,headers:{Authorization:"Bearer "+await token(),"Content-Type":"application/json"}});
+ if(r.status===204||r.status===202)return null;
+ const d=await r.json().catch(()=>null);
+ if(!r.ok)throw new Error(r.status===404?"appareil inactif : lance une chanson sur la Sonos depuis l’appli Spotify, puis réessaie":r.status===403?"Spotify Premium requis ou accès refusé":(d&&d.error&&d.error.message)||"erreur "+r.status);
+ return d;
+}
+async function findTrack(t,who){
+ const d=await api("/search?type=track&limit=10&q="+encodeURIComponent(`track:${t} artist:${who}`));
+ const a=n(who).replace(/^the/,""),items=d.tracks.items;
+ const hit=items.find(x=>x.artists.some(y=>n(y.name).includes(a)||a.includes(n(y.name))))||items[0];
+ if(!hit)throw new Error("titre introuvable sur Spotify");
+ return hit;
+}
+const playTrack=h=>api("/me/player/play?device_id="+devId,{method:"PUT",body:JSON.stringify({uris:[h.uri],position_ms:Math.floor(h.duration_ms*0.3)})});
+const stop=()=>api("/me/player/pause?device_id="+devId,{method:"PUT"}).catch(()=>{});
+const art=h=>{const u=h.album&&h.album.images[0];if(u){const l=document.getElementById("lab");l.style.backgroundImage=`url(${u.url})`;l.textContent=""}};
+
+/* ---------- Écrans ---------- */
+function cpy(t){return `<div class="cp"><code>${t}</code><button class="sm" data-c="${t}">Copier</button></div>`}
+const lnk=(u,t,alt)=>`<a class="lk${alt?" alt":""}" href="${u}" target="_blank" rel="noopener">${t}</a>`;
+const BACK="<p class=\"hint\">Reviens ici avec le sélecteur d’onglets de ton navigateur.</p>";
+const STEPS=[
+ {t:"Créer ton dossier GitHub",h:()=>`<p>Un « dépôt » est le dossier en ligne qui va héberger le jeu.</p>${lnk("https://github.com/new","Ouvrir GitHub")}<p>Dans « Repository name », écris :</p>${cpy("jeu-reprises")}<p>Choisis <b>Public</b>, puis touche <b>Create repository</b>.</p>${BACK}`},
+ {t:"Déposer le fichier index.html",h:()=>`<p>Sur la page de ton nouveau dépôt, touche le lien <b>uploading an existing file</b>.</p><p>Choisis le fichier <b>index.html</b> (celui téléchargé depuis cette conversation), puis touche <b>Commit changes</b>.</p>${BACK}`},
+ {t:"Activer la page en ligne",h:()=>`<p>Dans ton dépôt : onglet <b>Settings</b>, puis <b>Pages</b> (menu de gauche).</p><p>Sous « Branch », choisis <b>main</b> et <b>/ (root)</b>, puis touche <b>Save</b>.</p><p>Attends une minute et recharge : une adresse apparaît en haut (« Your site is live at… »).</p>${BACK}`},
+ {t:"Ouvrir ton adresse en ligne",h:()=>`<p>Touche l’adresse qui s’affiche dans les réglages Pages : c’est cette même page, mais en ligne.</p><p>L’assistant reprendra à l’étape suivante.</p><p class="hint">Cette étape est la seule qui se fait hors du jeu.</p>`},
+ {t:"Ouvrir Spotify pour développeurs",h:()=>`${lnk("https://developer.spotify.com/dashboard/create","Ouvrir la création d’application")}<p>Connecte-toi avec ton compte Spotify Premium et accepte les conditions si on te les propose.</p>${BACK}`},
+ {t:"Nom et description",h:()=>`<p>Dans « App name » :</p>${cpy("Jeu des reprises")}<p>Dans « App description » :</p>${cpy("Jeu musical diffusé sur ma Sonos")}<p>Laisse « Website » vide.</p>${BACK}`},
+ {t:"Adresse de retour (Redirect URI)",h:()=>`<p>Copie cette adresse, colle-la dans « Redirect URI », puis touche <b>Add</b> à côté de la case.</p>${location.protocol.startsWith("http")?cpy(REDIRECT):'<p class="bad">Ouvre d’abord la page depuis son adresse en ligne (étapes 1 à 4).</p>'}<p>Elle doit apparaître dans une liste sous la case.</p>${BACK}`},
+ {t:"Web API et enregistrement",h:()=>`<p>Sous « Which API/SDKs are you planning to use? », coche <b>Web API</b>.</p><p>Coche la case des conditions, puis touche <b>Save</b>.</p>${BACK}`},
+ {t:"Copier le Client ID",h:()=>`${lnk("https://developer.spotify.com/dashboard","Ouvrir mes applications Spotify")}<p>Touche « Jeu des reprises », puis <b>Settings</b>. Copie la ligne <b>Client ID</b> (32 caractères).</p><p class="bad">Ne copie pas « Client secret ».</p>${BACK}`},
+ {t:"Coller le Client ID et se connecter",h:()=>`<input id="cid" placeholder="Client ID (32 caractères)" autocomplete="off" value="${LS("cid")||""}"><button class="sm" id="pa">Coller depuis le presse-papiers</button><p id="cer"></p><div id="mob"></div><button class="cta" id="lg">Se connecter à Spotify</button><p>Spotify demande l’autorisation : touche <b>Accepter</b>. Tu reviens ensuite dans le jeu.</p><p class="hint">Si une erreur s’affiche : INVALID_CLIENT = Client ID faux (étape 9) ; INVALID_REDIRECT_URI = adresse de l’étape 7 différente.</p>`}
+];
+function setup(){
+ const web=location.protocol.startsWith("http");
+ let k=+(LS("stp")||0);
+ if(web&&k<4)k=4;
+ k=Math.min(k,STEPS.length-1);
+ const s=STEPS[k];
+ app.innerHTML=`<div class="top"><span>Étape ${k+1} sur ${STEPS.length}</span><b>Installation Spotify</b></div>
+ <div class="bar"><i style="transform:scaleX(${(k+1)/STEPS.length})"></i></div>
+ <h1>${s.t}</h1>${s.h()}
+ <div class="nav">${k>(web?4:0)?'<button class="sm" id="bk">← Retour</button>':'<span></span>'}${k<STEPS.length-1?'<button class="cta" id="nx2">C’est fait, suite →</button>':''}</div>`;
+ const go=d=>{SS("stp",k+d);setup();scrollTo(0,0)};
+ const b=document.getElementById("bk"),n2=document.getElementById("nx2");
+ if(b)b.onclick=()=>go(-1);
+ if(n2)n2.onclick=()=>go(1);
+ document.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{try{await navigator.clipboard.writeText(x.dataset.c);x.textContent="Copié ✓"}catch(e){x.textContent="Copie à la main"}});
+ const lg=document.getElementById("lg");
+ if(lg){
+  lg.onclick=login;
+  const cid=document.getElementById("cid"),cer=document.getElementById("cer");
+  cid.oninput=()=>{const v=cid.value.replace(/\s/g,""),ok=/^[a-f0-9]{32}$/i.test(v);cer.style.color=ok?"var(--ok)":"var(--bad)";cer.textContent=v?(ok?"Client ID valide ✓":"Il faut 32 caractères (chiffres et lettres a-f). Tu en as "+v.length+"."):"";const mob=document.getElementById("mob");mob.innerHTML=ok&&location.protocol.startsWith("http")?"<p>Pour terminer sur ton téléphone, copie ce lien et envoie-le-toi (message, courriel, notes) :</p>"+cpy(REDIRECT+"?cid="+v):"";const mb=mob.querySelector("[data-c]");if(mb)mb.onclick=async()=>{try{await navigator.clipboard.writeText(mb.dataset.c);mb.textContent="Copié ✓"}catch(e){mb.textContent="Copie à la main"}}};
+  document.getElementById("pa").onclick=async()=>{try{cid.value=(await navigator.clipboard.readText()).trim();cid.oninput()}catch(e){cer.style.color="var(--bad)";cer.textContent="Colle-le à la main dans la case."}};
+  if(cid.value)cid.oninput();
+ }
+}
+async function home(){
+ app.innerHTML=`<h1>Qui a chanté l’original ?</h1>
+ <p>Tu entends une reprise sur ta Sonos. Devine qui a créé la chanson avant elle. À la fin de chaque manche, l’original joue.</p>
+ <div class="disc"><div class="lab">🎵</div></div>
+ <p>Enceinte de diffusion :</p>
+ <select id="dev"></select>
+ <button class="sm" id="rf">Actualiser la liste</button>
+ <p id="msg"></p>
+ <button class="cta" id="go">Lancer la partie</button>`;
+ document.getElementById("rf").onclick=loadDevices;
+ document.getElementById("go").onclick=()=>{
+  devId=document.getElementById("dev").value;
+  if(!devId){document.getElementById("msg").textContent="Choisis d’abord une enceinte.";return}
+  SS("dev",devId);start()};
+ loadDevices();
+}
+async function loadDevices(){
+ const sel=document.getElementById("dev"),msg=document.getElementById("msg");
+ msg.textContent="Recherche des enceintes…";
+ try{
+  const d=await api("/me/player/devices");
+  sel.innerHTML=d.devices.map(x=>`<option value="${x.id}">${x.name} (${x.type})</option>`).join("");
+  const pick=d.devices.find(x=>x.id===LS("dev"))||d.devices.find(x=>x.type==="Speaker");
+  if(pick)sel.value=pick.id;
+  msg.textContent=d.devices.length?"":"Aucune enceinte trouvée. Ouvre l’appli Spotify, joue une chanson sur la Sonos, puis touche Actualiser.";
+ }catch(e){msg.textContent="Erreur : "+e.message}
+}
+function start(){deck=shuffle(SONGS).slice(0,ROUNDS);i=0;score=0;streak=0;round()}
+
+async function round(){
+ cur=deck[i];locked=false;
+ const opts=shuffle([cur.o,...shuffle(SONGS.filter(s=>s.o!==cur.o)).slice(0,3).map(s=>s.o)]);
+ app.innerHTML=`<div class="top"><span>Manche ${i+1} / ${ROUNDS}</span><b>${score} pts</b></div>
+ <div class="bar"><i id="bar"></i></div>
+ <div class="disc" id="disc"><div class="lab" id="lab">🎵</div></div>
+ <p class="q" id="q">Envoi vers la Sonos…</p>
+ <div class="choices" id="ch"></div><div id="rev"></div>`;
+ try{const h=await findTrack(cur.t,cur.c);await playTrack(h);art(h)}
+ catch(e){document.getElementById("q").textContent="Lecture impossible ("+e.message+"). On passe à la suivante.";setTimeout(next,3500);return}
+ document.getElementById("disc").classList.add("spin");
+ document.getElementById("q").textContent="Qui a créé la chanson originale ?";
+ const ch=document.getElementById("ch");
+ opts.forEach(o=>{const b=document.createElement("button");b.textContent=o;b.onclick=()=>answer(b,o);ch.appendChild(b)});
+ const t0=Date.now(),bar=document.getElementById("bar");
+ clearInterval(timer);
+ timer=setInterval(()=>{
+  left=Math.max(0,TIME-(Date.now()-t0)/1000);
+  bar.style.transform=`scaleX(${left/TIME})`;
+  if(left<=0){clearInterval(timer);answer(null,null)}
+ },100);
+}
+function answer(btn,choice){
+ if(locked)return;locked=true;clearInterval(timer);
+ document.getElementById("disc").classList.remove("spin");
+ const good=choice===cur.o;let gain=0;
+ if(good){streak++;gain=50+Math.round(left*5)+(streak>1?(streak-1)*10:0);score+=gain;best=Math.max(best||0,streak)}else streak=0;
+ document.querySelectorAll("#ch button").forEach(b=>{b.disabled=true;if(b.textContent===cur.o)b.classList.add("ok");else if(b===btn)b.classList.add("no")});
+ document.getElementById("rev").innerHTML=`<div class="reveal">${good?`Bravo, +${gain} pts${streak>1?` (série de ${streak})`:""}.`:(choice?"Raté.":"Temps écoulé.")}<br>
+ <strong>${cur.t}</strong> a été créée par ${cur.o}. Cette version est de ${cur.c}.<br><span id="orig">Chargement de l’original…</span></div>
+ <button class="cta" id="nx">${i+1<ROUNDS?"Manche suivante":"Voir mon score"}</button>`;
+ document.getElementById("nx").onclick=next;
+ playOriginal();
+}
+async function playOriginal(){
+ const my=i,st=document.getElementById("orig");
+ try{
+  const h=await findTrack(cur.t,cur.o);
+  if(my!==i)return;
+  await playTrack(h);art(h);
+  document.getElementById("disc").classList.add("spin");
+  st.textContent="▶ L’original de "+cur.o+" joue sur ta Sonos.";
+ }catch(e){if(my===i)st.textContent="Original impossible à lancer : "+e.message}
+}
+function next(){clearInterval(timer);stop();i++;i<deck.length?round():end()}
+function end(){
+ const msg=score>900?"Oreille d’expert.":score>500?"Belle culture musicale.":"À toi de rejouer pour t’améliorer.";
+ app.innerHTML=`<h1>Partie terminée</h1><div class="big">${score} pts</div>
+ <p style="text-align:center">${msg} Meilleure série : ${best||0}.</p><button class="cta" id="again">Rejouer</button>`;
+ document.getElementById("again").onclick=start;
+}
+function connectScreen(){
+ app.innerHTML=`<h1>Dernière étape</h1>
+ <p>Le Client ID est déjà enregistré sur cet appareil. Touche le bouton, connecte-toi à Spotify et accepte l’autorisation : tu reviens ensuite dans le jeu.</p>
+ <input id="cid" type="hidden" value="${LS("cid")}"><p id="cer" class="bad"></p>
+ <button class="cta" id="lg">Se connecter à Spotify</button>
+ <button class="sm" id="chg">Changer de Client ID</button>`;
+ document.getElementById("lg").onclick=login;
+ document.getElementById("chg").onclick=()=>{localStorage.removeItem("cid");SS("stp",9);setup()};
+}
+async function boot(){
+ const q=new URLSearchParams(location.search),code=q.get("code"),pc=(q.get("cid")||"").replace(/\s/g,"");
+ if(/^[a-f0-9]{32}$/i.test(pc)){SS("cid",pc);history.replaceState({},"",REDIRECT)}
+ if(code){
+  try{await tokenReq({grant_type:"authorization_code",code,redirect_uri:REDIRECT,code_verifier:LS("ver")})}catch(e){}
+  history.replaceState({},"",REDIRECT);
+ }
+ if(LS("ref"))home();else if(LS("cid")&&location.protocol.startsWith("http"))connectScreen();else setup();
+}
+boot();
+</script>
+</body>
+</html>
