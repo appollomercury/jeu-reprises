@@ -62,27 +62,170 @@ a.lk.alt{background:var(--bg);border:2px solid var(--mute)}
 .nav .sm{margin:0}
 .hint{font-size:.9rem}
 .bad{color:var(--bad);font-weight:700}
+details.step summary{cursor:pointer}
 </style>
 </head>
 <body>
 <main id="app"></main>
 <script>
-const SONGS=[
- {t:"Hurt",c:"Johnny Cash",o:"Nine Inch Nails"},
- {t:"Hallelujah",c:"Jeff Buckley",o:"Leonard Cohen"},
- {t:"Respect",c:"Aretha Franklin",o:"Otis Redding"},
- {t:"I Will Always Love You",c:"Whitney Houston",o:"Dolly Parton"},
- {t:"All Along the Watchtower",c:"Jimi Hendrix",o:"Bob Dylan"},
- {t:"Mad World",c:"Gary Jules",o:"Tears for Fears"},
- {t:"Girls Just Want to Have Fun",c:"Cyndi Lauper",o:"Robert Hazard"},
- {t:"Nothing Compares 2 U",c:"Sinéad O’Connor",o:"Prince"},
- {t:"Twist and Shout",c:"The Beatles",o:"The Isley Brothers"},
- {t:"Valerie",c:"Amy Winehouse",o:"The Zutons"},
- {t:"Tainted Love",c:"Soft Cell",o:"Gloria Jones"},
- {t:"Killing Me Softly",c:"Fugees",o:"Lori Lieberman"},
- {t:"Walk This Way",c:"Run-D.M.C.",o:"Aerosmith"}
+let POOL=null;
+let SONGS=[
+ {t:"Hurt",c:"Johnny Cash",o:"Nine Inch Nails",g:"Pop / Rock"},
+ {t:"Hallelujah",c:"Jeff Buckley",o:"Leonard Cohen",g:"Pop / Rock"},
+ {t:"I Will Always Love You",c:"Whitney Houston",o:"Dolly Parton",g:"Pop / Rock"},
+ {t:"All Along the Watchtower",c:"Jimi Hendrix",o:"Bob Dylan",g:"Pop / Rock"},
+ {t:"Mad World",c:"Gary Jules",o:"Tears for Fears",g:"Pop / Rock"},
+ {t:"Nothing Compares 2 U",c:"Sinéad O’Connor",o:"Prince",g:"Pop / Rock"},
+ {t:"Twist and Shout",c:"The Beatles",o:"The Isley Brothers",g:"Pop / Rock"},
+ {t:"Respect",c:"Aretha Franklin",o:"Otis Redding",g:"Soul / Funk"},
+ {t:"Valerie",c:"Amy Winehouse",o:"The Zutons",g:"Soul / Funk"},
+ {t:"Proud Mary",c:"Ike & Tina Turner",o:"Creedence Clearwater Revival",g:"Soul / Funk"},
+ {t:"Light My Fire",c:"José Feliciano",o:"The Doors",g:"Soul / Funk"},
+ {t:"Mas Que Nada",c:"Sergio Mendes",o:"Jorge Ben",g:"Bossa nova"},
+ {t:"The Look of Love",c:"Sergio Mendes",o:"Dusty Springfield",g:"Bossa nova"},
+ {t:"Love Will Tear Us Apart",c:"Nouvelle Vague",o:"Joy Division",g:"Bossa nova"},
+ {t:"Just Can’t Get Enough",c:"Nouvelle Vague",o:"Depeche Mode",g:"Bossa nova"},
+ {t:"Blue Monday",c:"Nouvelle Vague",o:"New Order",g:"Bossa nova"},
+ {t:"Fever",c:"Peggy Lee",o:"Little Willie John",g:"Jazz"},
+ {t:"Why Don’t You Do Right",c:"Peggy Lee",o:"Lil Green",g:"Jazz"},
+ {t:"I Put a Spell on You",c:"Nina Simone",o:"Screamin’ Jay Hawkins",g:"Jazz"},
+ {t:"Smells Like Teen Spirit",c:"The Bad Plus",o:"Nirvana",g:"Jazz"},
+ {t:"Red Red Wine",c:"UB40",o:"Neil Diamond",g:"Reggae"},
+ {t:"Can’t Help Falling in Love",c:"UB40",o:"Elvis Presley",g:"Reggae"},
+ {t:"I Shot the Sheriff",c:"Eric Clapton",o:"Bob Marley",g:"Reggae"},
+ {t:"The Tide Is High",c:"Blondie",o:"The Paragons",g:"Reggae"},
+ {t:"I Can See Clearly Now",c:"Jimmy Cliff",o:"Johnny Nash",g:"Reggae"},
+ {t:"Police and Thieves",c:"The Clash",o:"Junior Murvin",g:"Reggae"},
+ {t:"Hound Dog",c:"Elvis Presley",o:"Big Mama Thornton",g:"Blues"},
+ {t:"Black Magic Woman",c:"Santana",o:"Fleetwood Mac",g:"Blues"},
+ {t:"Little Red Rooster",c:"The Rolling Stones",o:"Howlin’ Wolf",g:"Blues"},
+ {t:"Sweet Home Chicago",c:"The Blues Brothers",o:"Robert Johnson",g:"Blues"},
+ {t:"Statesboro Blues",c:"The Allman Brothers Band",o:"Blind Willie McTell",g:"Blues"},
+ {t:"Can’t Take My Eyes Off You",c:"Gloria Gaynor",o:"Frankie Valli",g:"Disco"},
+ {t:"Don’t Leave Me This Way",c:"Thelma Houston",o:"Harold Melvin & the Blue Notes",g:"Disco"},
+ {t:"Never Can Say Goodbye",c:"Gloria Gaynor",o:"The Jackson 5",g:"Disco"},
+ {t:"Gloria",c:"Laura Branigan",o:"Umberto Tozzi",g:"Disco"},
+ {t:"I Will Survive",c:"Cake",o:"Gloria Gaynor",g:"Disco"},
+ {t:"I Fought the Law",c:"The Clash",o:"The Crickets",g:"Punk"},
+ {t:"Baby, I Love You",c:"Ramones",o:"The Ronettes",g:"Punk"},
+ {t:"Surfin’ Bird",c:"Ramones",o:"The Trashmen",g:"Punk"},
+ {t:"Substitute",c:"Sex Pistols",o:"The Who",g:"Punk"},
+ {t:"Hanging on the Telephone",c:"Blondie",o:"The Nerves",g:"Punk"},
+ {t:"Jolene",c:"The White Stripes",o:"Dolly Parton",g:"Country"},
+ {t:"Tennessee Whiskey",c:"Chris Stapleton",o:"David Allan Coe",g:"Country"},
+ {t:"Blue Eyes Crying in the Rain",c:"Willie Nelson",o:"Roy Acuff",g:"Country"},
+ {t:"Take Me Home, Country Roads",c:"Olivia Newton-John",o:"John Denver",g:"Country"},
+ {t:"Cover Me Up",c:"Morgan Wallen",o:"Jason Isbell",g:"Country"},
+ {t:"Walk This Way",c:"Run-D.M.C.",o:"Aerosmith",g:"Rap / Hip-hop"},
+ {t:"Killing Me Softly",c:"Fugees",o:"Lori Lieberman",g:"Rap / Hip-hop"},
+ {t:"No Woman, No Cry",c:"Fugees",o:"Bob Marley",g:"Rap / Hip-hop"},
+ {t:"I Love Rock ’n’ Roll",c:"Joan Jett & the Blackhearts",o:"The Arrows",g:"Années 80"},
+ {t:"Hazy Shade of Winter",c:"The Bangles",o:"Simon & Garfunkel",g:"Années 80"},
+ {t:"Mony Mony",c:"Billy Idol",o:"Tommy James and the Shondells",g:"Années 80"},
+ {t:"I Think We’re Alone Now",c:"Tiffany",o:"Tommy James and the Shondells",g:"Années 80"},
+ {t:"Venus",c:"Bananarama",o:"Shocking Blue",g:"Années 80"},
+ {t:"Dancing in the Street",c:"David Bowie",o:"Martha and the Vandellas",g:"Années 80"},
+ {t:"Tainted Love",c:"Soft Cell",o:"Gloria Jones",g:"Années 80"},
+ {t:"Girls Just Want to Have Fun",c:"Cyndi Lauper",o:"Robert Hazard",g:"Années 80"},
+ {t:"Aux Champs-Élysées",c:"Joe Dassin",o:"Jason Crest",g:"Chanson française",ot:"Waterloo Road"},
+ {t:"Ne me quitte pas",c:"Nina Simone",o:"Jacques Brel",g:"Chanson française"},
+ {t:"La Vie en rose",c:"Louis Armstrong",o:"Édith Piaf",g:"Chanson française"},
+ {t:"Beyond the Sea",c:"Bobby Darin",o:"Charles Trenet",g:"Chanson française",ot:"La Mer"}
 ];
-const ROUNDS=10,TIME=20,app=document.getElementById("app");
+
+const BUILTIN=SONGS.slice();
+let GENRES=["Tous"];
+const lget=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const lset=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const keyOf=s=>s.t+"|"+s.c;
+function refreshGenres(){GENRES=["Tous",...new Set(SONGS.map(s=>s.g))]}
+function normSong(x){
+ const f=(...k)=>{for(const a of k)if(x[a]!=null&&String(x[a]).trim())return String(x[a]).trim()};
+ const t=f("t","titre","title"),c=f("c","reprise","reprise_par","cover"),o=f("o","original","original_par"),g=f("g","style","genre")||"Autres",ot=f("ot","titre_original","original_title");
+ if(!t||!c||!o)return null;
+ return ot?{t,c,o,g,ot}:{t,c,o,g};
+}
+function splitLine(l,d){
+ const out=[];let c="",q=false;
+ for(let k=0;k<l.length;k++){const ch=l[k];
+  if(q){if(ch==='"'){if(l[k+1]==='"'){c+='"';k++}else q=false}else c+=ch}
+  else if(ch==='"')q=true;
+  else if(ch===d){out.push(c.trim());c=""}
+  else c+=ch}
+ out.push(c.trim());return out;
+}
+function parseList(txt){
+ txt=txt.replace(/^\uFEFF/,"").trim();
+ if(!txt)return [];
+ if(txt[0]==="["||txt[0]==="{"){let a=JSON.parse(txt);if(!Array.isArray(a))a=a.songs||a.chansons||[];return a.map(normSong).filter(Boolean)}
+ const lines=txt.split(/\r?\n/).filter(l=>l.trim()&&!l.trim().startsWith("#"));
+ if(!lines.length)return [];
+ const d=lines[0].includes(";")?";":",";
+ let rows=lines.map(l=>splitLine(l,d));
+ if(/^(titre|title|t)$/i.test(rows[0][0]))rows=rows.slice(1);
+ return rows.map(r=>normSong({t:r[0],c:r[1],o:r[2],g:r[3],ot:r[4]})).filter(Boolean);
+}
+async function loadList(){
+ let base=BUILTIN.slice(),src="intégrée";
+ for(const f of ["chansons.csv","chansons.json"]){
+  try{const r=await fetch(f,{cache:"no-store"});if(r.ok){const a=parseList(await r.text());if(a.length){base=a;src=f+" (hébergé avec le jeu)";break}}}catch(e){}
+ }
+ try{const m=JSON.parse(lget("mylist")||"null");if(m&&m.length){base=m;src="importée sur cet appareil"}}catch(e){}
+ SONGS=base;window.LIST_SRC=src;refreshGenres();
+}
+/* Tirage aléatoire : évite les chansons déjà jouées récemment et varie les styles */
+function pickDeck(pool,n){
+ let played=[];try{played=JSON.parse(lget("played")||"[]")}catch(e){}
+ const fresh=shuffle(pool.filter(s=>!played.includes(keyOf(s))));
+ const rest=shuffle(pool.filter(s=>played.includes(keyOf(s))));
+ let src=fresh;
+ if(fresh.length<n){played=played.filter(k=>!pool.some(s=>keyOf(s)===k));src=[...fresh,...rest]}
+ const by={};src.forEach(s=>(by[s.g]=by[s.g]||[]).push(s));
+ const gs=shuffle(Object.keys(by));let out=[];
+ while(out.length<n&&out.length<src.length){for(const g of gs){if(by[g].length&&out.length<n)out.push(by[g].shift())}}
+ out=shuffle(out);
+ played.push(...out.map(keyOf));lset("played",JSON.stringify(played.slice(-300)));
+ return out;
+}
+function listPanel(){
+ const fl=window.FLASH||"";window.FLASH="";
+ return `<details class="step"${fl?" open":""}><summary><b>Ma liste de chansons</b></summary>
+ <p>Liste actuelle : ${window.LIST_SRC} (${SONGS.length} chansons).</p>
+ <p>Un fichier .csv, une chanson par ligne :</p>
+ <code>titre;reprise par;original par;style;titre de l’original (facultatif)</code>
+ <p class="hint">Astuce : dépose un fichier <b>chansons.csv</b> à côté de index.html dans GitHub, et le jeu le charge tout seul sur tous tes appareils.</p>
+ <select id="lmode"><option value="add">Ajouter à la liste actuelle</option><option value="rep">Remplacer la liste actuelle</option></select>
+ <label class="sm" style="display:block;text-align:center;cursor:pointer;border:2px solid var(--mute)">Importer un fichier (.csv ou .json)<input id="lfile" type="file" accept=".csv,.json,.txt" hidden></label>
+ <button class="sm" id="lexp">Exporter la liste actuelle (modèle à modifier)</button>
+ <button class="sm" id="lrst">Retirer ma liste importée</button>
+ <button class="sm" id="lhist">Oublier les chansons déjà jouées</button>
+ <p id="lmsg" class="hint">${fl}</p></details>`;
+}
+function bindListPanel(rerender){
+ const msg=t=>{document.getElementById("lmsg").textContent=t};
+ document.getElementById("lfile").onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+   const a=parseList(await f.text());
+   if(!a.length){msg("Aucune chanson valide trouvée dans ce fichier.");return}
+   let list=document.getElementById("lmode").value==="add"?[...SONGS,...a]:a;
+   const seen=new Set();list=list.filter(s=>{const k=keyOf(s);if(seen.has(k))return false;seen.add(k);return true});
+   lset("mylist",JSON.stringify(list));
+   await loadList();window.FLASH=a.length+" chanson(s) lues. La liste compte maintenant "+SONGS.length+" chansons.";rerender();
+  }catch(err){msg("Fichier illisible : "+err.message)}
+ };
+ document.getElementById("lexp").onclick=()=>{
+  const q=v=>/[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
+  const rows=["titre;reprise_par;original_par;style;titre_original",...SONGS.map(s=>[s.t,s.c,s.o,s.g,s.ot||""].map(q).join(";"))];
+  const b=new Blob(["\uFEFF"+rows.join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="chansons.csv";document.body.appendChild(a);a.click();a.remove();
+  msg("Fichier chansons.csv téléchargé.");
+ };
+ document.getElementById("lrst").onclick=async()=>{try{localStorage.removeItem("mylist")}catch(e){}await loadList();window.FLASH="Liste importée retirée.";rerender()};
+ document.getElementById("lhist").onclick=()=>{try{localStorage.removeItem("played")}catch(e){}msg("Historique effacé : toutes les chansons peuvent revenir.")};
+}
+
+let ROUNDS=10;const TIME=20,app=document.getElementById("app");
 const LS=k=>localStorage.getItem(k),SS=(k,v)=>localStorage.setItem(k,v);
 const REDIRECT=location.origin+location.pathname;
 let deck,i,score,streak,best,timer,left,cur,locked,devId;
@@ -126,8 +269,9 @@ async function findTrack(t,who){
  if(!hit)throw new Error("titre introuvable sur Spotify");
  return hit;
 }
-const playTrack=h=>api("/me/player/play?device_id="+devId,{method:"PUT",body:JSON.stringify({uris:[h.uri],position_ms:Math.floor(h.duration_ms*0.3)})});
-const stop=()=>api("/me/player/pause?device_id="+devId,{method:"PUT"}).catch(()=>{});
+const dq=()=>devId&&devId!=="active"?"?device_id="+devId:"";
+const playTrack=h=>api("/me/player/play"+dq(),{method:"PUT",body:JSON.stringify({uris:[h.uri],position_ms:Math.floor(h.duration_ms*0.3)})});
+const stop=()=>api("/me/player/pause"+dq(),{method:"PUT"}).catch(()=>{});
 const art=h=>{const u=h.album&&h.album.images[0];if(u){const l=document.getElementById("lab");l.style.backgroundImage=`url(${u.url})`;l.textContent=""}};
 
 /* ---------- Écrans ---------- */
@@ -174,16 +318,19 @@ async function home(){
  app.innerHTML=`<h1>Qui a chanté l’original ?</h1>
  <p>Tu entends une reprise sur ta Sonos. Devine qui a créé la chanson avant elle. À la fin de chaque manche, l’original joue.</p>
  <div class="disc"><div class="lab">🎵</div></div>
+ <p>Style musical :</p><select id="gn">${GENRES.map(g=>`<option value="${g}">${g}</option>`).join("")}</select>
  <p>Enceinte de diffusion :</p>
  <select id="dev"></select>
  <button class="sm" id="rf">Actualiser la liste</button>
  <p id="msg"></p>
- <button class="cta" id="go">Lancer la partie</button>`;
+ <button class="cta" id="go">Lancer la partie</button>
+ ${listPanel()}`;
  document.getElementById("rf").onclick=loadDevices;
+ bindListPanel(home);
  document.getElementById("go").onclick=()=>{
   devId=document.getElementById("dev").value;
   if(!devId){document.getElementById("msg").textContent="Choisis d’abord une enceinte.";return}
-  SS("dev",devId);start()};
+  SS("dev",devId);const g=document.getElementById("gn").value;POOL=g==="Tous"?null:SONGS.filter(x=>x.g===g);start()};
  loadDevices();
 }
 async function loadDevices(){
@@ -191,17 +338,17 @@ async function loadDevices(){
  msg.textContent="Recherche des enceintes…";
  try{
   const d=await api("/me/player/devices");
-  sel.innerHTML=d.devices.map(x=>`<option value="${x.id}">${x.name} (${x.type})</option>`).join("");
+  sel.innerHTML='<option value="active">Appareil actif de Spotify (garde la sortie en cours)</option>'+d.devices.map(x=>`<option value="${x.id}">${x.name} (${x.type})${x.is_active?" – actif":""}</option>`).join("");
   const pick=d.devices.find(x=>x.id===LS("dev"))||d.devices.find(x=>x.type==="Speaker");
-  if(pick)sel.value=pick.id;
-  msg.textContent=d.devices.length?"":"Aucune enceinte trouvée. Ouvre l’appli Spotify, joue une chanson sur la Sonos, puis touche Actualiser.";
+  sel.value=pick?pick.id:"active";
+  msg.textContent=d.devices.some(x=>x.type==="Speaker")?"":(d.devices.length?"Ta Sonos n’est pas encore visible, seulement : "+d.devices.map(x=>x.name).join(", ")+". Dans l’appli Spotify du téléphone ou de l’ordinateur (pas le lecteur web), choisis ta Sonos, joue une chanson 10 secondes, puis touche Actualiser.":"Aucune enceinte trouvée. Ouvre l’appli Spotify, joue une chanson sur la Sonos, puis touche Actualiser.");
  }catch(e){msg.textContent="Erreur : "+e.message}
 }
-function start(){deck=shuffle(SONGS).slice(0,ROUNDS);i=0;score=0;streak=0;round()}
+function start(){const pool=POOL||SONGS;deck=pickDeck(pool,10);ROUNDS=deck.length;i=0;score=0;streak=0;round()}
 
 async function round(){
  cur=deck[i];locked=false;
- const opts=shuffle([cur.o,...shuffle(SONGS.filter(s=>s.o!==cur.o)).slice(0,3).map(s=>s.o)]);
+ const opts=shuffle([cur.o,...shuffle([...new Set([...SONGS,...BUILTIN].map(s=>s.o))].filter(o=>o!==cur.o)).slice(0,3)]);
  app.innerHTML=`<div class="top"><span>Manche ${i+1} / ${ROUNDS}</span><b>${score} pts</b></div>
  <div class="bar"><i id="bar"></i></div>
  <div class="disc" id="disc"><div class="lab" id="lab">🎵</div></div>
@@ -236,7 +383,7 @@ function answer(btn,choice){
 async function playOriginal(){
  const my=i,st=document.getElementById("orig");
  try{
-  const h=await findTrack(cur.t,cur.o);
+  const h=await findTrack(cur.ot||cur.t,cur.o);
   if(my!==i)return;
   await playTrack(h);art(h);
   document.getElementById("disc").classList.add("spin");
@@ -260,6 +407,7 @@ function connectScreen(){
  document.getElementById("chg").onclick=()=>{localStorage.removeItem("cid");SS("stp",9);setup()};
 }
 async function boot(){
+ await loadList();
  const q=new URLSearchParams(location.search),code=q.get("code"),pc=(q.get("cid")||"").replace(/\s/g,"");
  if(/^[a-f0-9]{32}$/i.test(pc)){SS("cid",pc);history.replaceState({},"",REDIRECT)}
  if(code){
