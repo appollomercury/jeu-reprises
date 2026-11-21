@@ -259,7 +259,7 @@ async function api(path,opt={}){
  const r=await fetch("https://api.spotify.com/v1"+path,{...opt,headers:{Authorization:"Bearer "+await token(),"Content-Type":"application/json"}});
  if(r.status===204||r.status===202)return null;
  const d=await r.json().catch(()=>null);
- if(!r.ok)throw new Error(r.status===404?"appareil inactif : lance une chanson sur la Sonos depuis l’appli Spotify, puis réessaie":r.status===403?"Spotify Premium requis ou accès refusé":(d&&d.error&&d.error.message)||"erreur "+r.status);
+ if(!r.ok)throw new Error(r.status===404?"appareil inactif : lance une chanson sur la Sonos depuis l’appli Spotify, puis réessaie":r.status===403?"accès refusé par Spotify"+(d&&d.error&&(d.error.reason||d.error.message)?" – "+(d.error.reason||d.error.message):""):(d&&d.error&&d.error.message)||"erreur "+r.status);
  return d;
 }
 async function findTrack(t,who){
@@ -323,9 +323,11 @@ async function home(){
  <select id="dev"></select>
  <button class="sm" id="rf">Actualiser la liste</button>
  <p id="msg"></p>
+ <button class="sm" id="rec">Reconnecter Spotify</button>
  <button class="cta" id="go">Lancer la partie</button>
  ${listPanel()}`;
  document.getElementById("rf").onclick=loadDevices;
+ document.getElementById("rec").onclick=()=>{["tok","ref","exp"].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});connectScreen()};
  bindListPanel(home);
  document.getElementById("go").onclick=()=>{
   devId=document.getElementById("dev").value;
